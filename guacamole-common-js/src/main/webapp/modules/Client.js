@@ -1320,6 +1320,10 @@ Guacamole.Client = function(tunnel) {
             display.pop(layer);
 
         },
+        
+        "required": function receivePrompt(parameters) {
+            console.log('>>>PROMPT<<< Required: ' + parameters);
+        },
 
         "push": function(parameters) {
 
