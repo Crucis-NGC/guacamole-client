@@ -17,10 +17,7 @@
  * under the License.
  */
 
-/**
- * The module for code used to prompt user for required information.
- */
-angular.module('prompt', [
-    'rest',
-    'storage'
-]);
+.client .notification .parameters h3,
+.client .notification .parameters .password-field .toggle-password {
+    display: none;
+}

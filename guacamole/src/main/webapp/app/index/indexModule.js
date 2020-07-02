@@ -32,7 +32,6 @@ angular.module('index', [
     'ngTouch',
     'notification',
     'pascalprecht.translate',
-    'prompt',
     'rest',
     'settings',
     'templates-main'

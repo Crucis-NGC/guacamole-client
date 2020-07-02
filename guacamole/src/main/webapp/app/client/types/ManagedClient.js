@@ -37,7 +37,6 @@ angular.module('client').factory('ManagedClient', ['$rootScope', '$injector',
 
     // Required services
     var $document               = $injector.get('$document');
-    var $log                    = $injector.get('$log');
     var $q                      = $injector.get('$q');
     var $rootScope              = $injector.get('$rootScope');
     var $window                 = $injector.get('$window');
@@ -52,7 +51,6 @@ angular.module('client').factory('ManagedClient', ['$rootScope', '$injector',
     var guacAudio               = $injector.get('guacAudio');
     var guacHistory             = $injector.get('guacHistory');
     var guacImage               = $injector.get('guacImage');
-    var guacPrompt              = $injector.get('guacPrompt');
     var guacVideo               = $injector.get('guacVideo');
 
     /**
@@ -167,6 +165,16 @@ angular.module('client').factory('ManagedClient', ['$rootScope', '$injector',
             type : 'text/plain',
             data : ''
         });
+
+        /**
+         * The current state of all parameters requested by the server via
+         * "required" instructions, where each object key is the name of a
+         * requested parameter and each value is the current value entered by
+         * the user or null if no parameters are currently being requested.
+         *
+         * @type Object.<String, String>
+         */
+        this.requiredParameters = null;
 
         /**
          * All uploaded files. As files are uploaded, their progress can be
@@ -586,19 +594,10 @@ angular.module('client').factory('ManagedClient', ['$rootScope', '$injector',
         // Handle any received prompts
         client.onrequired = function onrequired(parameters) {
             $rootScope.$apply(function promptUser() {
-                guacPrompt.getUserInput(parameters.reduce((a,b)=> (a[b]='',a),{}))
-                        .then(function gotUserInput(data) {
-                            for (var parameter in data) {
-                                var stream = client.createArgumentValueStream("text/plain", parameter);
-                                var writer = new Guacamole.StringWriter(stream);
-                                writer.sendText(data[parameter]);
-                                writer.sendEnd();
-                            }
-
-                    }, function errorUserInput() {
-                        $log.error('Error gathering user input.');
-                        client.disconnect();
-                    });
+                managedClient.requiredParameters = {};
+                angular.forEach(parameters, function populateParameter(name) {
+                    managedClient.requiredParameters[name] = '';
+                });
             });
         };
 
@@ -755,6 +754,29 @@ angular.module('client').factory('ManagedClient', ['$rootScope', '$injector',
         var managedArgument = managedClient.arguments[name];
         if (managedArgument && ManagedArgument.setValue(managedArgument, value))
             delete managedClient.arguments[name];
+    };
+
+    /**
+     * Sends the given connection parameter values using "argv" streams,
+     * updating the behavior of the connection in real-time if the server is
+     * expecting or requiring these parameters.
+     *
+     * @param {ManagedClient} managedClient
+     *     The ManagedClient instance associated with the active connection
+     *     being modified.
+     *
+     * @param {Object.<String, String>} values
+     *     The set of values to attempt to assign to corresponding connection
+     *     parameters, where each object key is the connection parameter being
+     *     set.
+     */
+    ManagedClient.sendArguments = function sendArguments(managedClient, values) {
+        angular.forEach(values, function sendArgument(value, name) {
+            var stream = managedClient.client.createArgumentValueStream("text/plain", name);
+            var writer = new Guacamole.StringWriter(stream);
+            writer.sendText(value);
+            writer.sendEnd();
+        });
     };
 
     /**
