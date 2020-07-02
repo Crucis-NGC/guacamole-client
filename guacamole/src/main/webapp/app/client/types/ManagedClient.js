@@ -585,20 +585,21 @@ angular.module('client').factory('ManagedClient', ['$rootScope', '$injector',
         
         // Handle any received prompts
         client.onrequired = function onrequired(parameters) {
-            
-            guacPrompt.getUserInput(parameters.reduce((a,b)=> (a[b]='',a),{}))
-                    .then(function gotUserInput(data) {
-                        for (var parameter in data) {
-                            var stream = client.createArgumentValueStream("text/plain", parameter);
-                            var writer = new Guacamole.StringWriter(stream);
-                            writer.sendText(data[parameter]);
-                            writer.sendEnd();
-                        }
+            $rootScope.$apply(function promptUser() {
+                guacPrompt.getUserInput(parameters.reduce((a,b)=> (a[b]='',a),{}))
+                        .then(function gotUserInput(data) {
+                            for (var parameter in data) {
+                                var stream = client.createArgumentValueStream("text/plain", parameter);
+                                var writer = new Guacamole.StringWriter(stream);
+                                writer.sendText(data[parameter]);
+                                writer.sendEnd();
+                            }
 
-                }, function errorUserInput() {
-                    $log.error('Error gathering user input.');
-                    client.disconnect();
-                });
+                    }, function errorUserInput() {
+                        $log.error('Error gathering user input.');
+                        client.disconnect();
+                    });
+            });
         };
 
         // Manage the client display
