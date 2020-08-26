@@ -198,7 +198,7 @@ public class SchemaResource {
     public ProtocolInfo getProtocol(@PathParam("identifier") String identifier) 
             throws GuacamoleException {
         
-        Map<String, ProtocolInfo> supportedProtocols = new LocalEnvironment().getProtocols();
+        Map<String, ProtocolInfo> supportedProtocols = LocalEnvironment.getInstance().getProtocols();
         Connection connection = userContext.getConnectionDirectory().get(identifier);
         return supportedProtocols.get(connection.getConfiguration().getProtocol());
         
